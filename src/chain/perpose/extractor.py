@@ -1,6 +1,8 @@
+from beanie import PydanticObjectId
 from langchain_core.prompts import PromptTemplate
 from src.chain.perpose.prompt import PURPOSE_PROMPT
 from src.llm.llm_client import get_llm
+from src.model.chat import Recent
 
 llm = get_llm()
 
@@ -9,10 +11,11 @@ purpose_prompt = PromptTemplate(
     input_variables=["place_features", "user_purpose"],
 )
 
-def respond_to_purpose(place_features: dict, user_purpose: str) -> str:
+async def respond_to_purpose(id: PydanticObjectId, user_purpose: str) -> str:
+    recent = await Recent.get(id)
     chain = purpose_prompt | llm
     response = chain.invoke({
-        "place_features": place_features,
+        "place_features": recent.categories,
         "user_purpose": user_purpose
     })
     return response.content

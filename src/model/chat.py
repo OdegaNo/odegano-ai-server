@@ -2,12 +2,12 @@ from datetime import datetime
 from typing import Optional
 from beanie import Document
 
-class Chat(Document):
-
-    name: str
-    description: Optional[str] = None
-    price: float
+class Recent(Document):
+    categories: dict
+    people: Optional[str] = None
+    day: Optional[str] = None
+    options: Optional[list] = []
     created_at: datetime = datetime.now()
 
     class Settings:
-        name = "chats"
+        name = "recents"

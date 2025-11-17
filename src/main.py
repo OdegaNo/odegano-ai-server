@@ -1,3 +1,4 @@
+from beanie import PydanticObjectId
 from fastapi import FastAPI
 
 from src.chain.categories.extractor import extract_place_traits
@@ -21,10 +22,10 @@ async def traits(places: str):
     )
 
 @app.post("/perpose")
-async def perpose(reason: str, traits: dict):
+async def perpose(reason: str, id: PydanticObjectId):
     return (
         {
             "message": "perpose extracted",
-            "data": respond_to_purpose(traits, reason)
+            "data": await respond_to_purpose(id, reason)
         },
     )

@@ -1,10 +1,9 @@
-from typing import Dict, Any
-
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from src.chain.categories.data import PlaceFeatures
 from src.chain.categories.prompt import EXTRACTOR_PROMPT
 from src.llm.llm_client import get_llm
+from src.model.chat import Recent
 
 llm = get_llm()
 parser = PydanticOutputParser(pydantic_object=PlaceFeatures)
@@ -16,7 +15,7 @@ prompt = PromptTemplate(
     partial_variables={"format_instructions": format_instructions},
 )
 
-def extract_place_traits(place: str) -> Dict[str, Any]:
+def extract_place_traits(place: str) -> Recent:
     place = place.strip()
     if not place:
         raise ValueError("place(여행지)를 빈값으로 보낼 수 없습니다.")
@@ -28,4 +27,10 @@ def extract_place_traits(place: str) -> Dict[str, Any]:
     else:
         parsed = PlaceFeatures(**result)
 
-    return parsed.model_dump()
+    data = Recent(
+        categories= parsed.model_dump(),
+    )
+
+    data.insert()
+
+    return data
