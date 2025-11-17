@@ -1,11 +1,16 @@
+import os
+
 from beanie import init_beanie
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from src.model.chat import Chat
+from src.model.chat import Recent
+
+load_dotenv()
 
 #TODO env 로 바꿔야함
-MONGO_URL = "mongodb://localhost:27017"
-DB_NAME = "test_db"
+MONGO_URL = os.getenv("MONGO_URL")
+DB_NAME = os.getenv("DB_NAME")
 
 async def app_init():
     client = AsyncIOMotorClient(MONGO_URL)
@@ -14,5 +19,5 @@ async def app_init():
 
     await init_beanie(
         database=db,
-        document_models=[Chat]
+        document_models=[Recent]
     )
