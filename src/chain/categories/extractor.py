@@ -2,8 +2,8 @@ from typing import Dict, Any
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from src.categories.data import PlaceFeatures
-from src.categories.prompt import EXTRACTOR_PROMPT
+from src.chain.categories.data import PlaceFeatures
+from src.chain.categories.prompt import EXTRACTOR_PROMPT
 from src.llm.llm_client import get_llm
 
 llm = get_llm()

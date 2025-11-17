@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
-from src.categories.extractor import extract_place_traits
+from src.chain.categories.extractor import extract_place_traits
+from src.chain.perpose.extractor import respond_to_purpose
 
 app = FastAPI()
 
@@ -10,16 +11,20 @@ async def root():
     return {"message": "Hello World"}
 
 @app.post("/traits")
-async def traits(request: str):
+async def traits(places: str):
     return (
         {
             "message": "traits extracted",
-            "data": extract_place_traits(request)
+            "data": extract_place_traits(places)
         },
         200,
     )
 
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+@app.post("/perpose")
+async def perpose(reason: str, traits: dict):
+    return (
+        {
+            "message": "perpose extracted",
+            "data": respond_to_purpose(traits, reason)
+        },
+    )
