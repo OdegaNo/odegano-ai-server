@@ -8,6 +8,7 @@ class Recent(Document):
     people: Optional[str] = None
     day: Optional[str] = None
     options: Optional[list] = []
+    finished: bool = False
     created_at: datetime = datetime.now()
 
     class Settings:
