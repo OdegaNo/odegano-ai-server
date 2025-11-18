@@ -20,15 +20,13 @@ prompt = PromptTemplate(
 
 
 def format_places_for_prompt(places: list[Place]) -> str:
-    """장소 목록을 프롬프트용 문자열로 포맷팅"""
+    """장소 목록을 프롬프트용 문자열로 포맷팅 (간결하게)"""
     formatted = []
     for idx, place in enumerate(places, 1):
-        formatted.append(
-            f"{idx}. {place.name}\n"
-            f"   주소: {place.address or '정보 없음'}\n"
-            f"   설명: {place.description[:100] if place.description else '설명 없음'}..."
-        )
-    return "\n\n".join(formatted)
+        # 설명을 50자로 줄여서 토큰 절약
+        desc = place.description[:50] if place.description else ""
+        formatted.append(f"{idx}. {place.name} | {place.address or ''} | {desc}")
+    return "\n".join(formatted)
 
 
 async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> PlaceRecommendations:
@@ -65,12 +63,12 @@ async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> Plac
             {"address": {"$regex": place_name, "$options": "i"}},
         ]
     
-    # 최대 50개까지만 가져와서 응답 속도 향상
-    places = await Place.find(query_filter).limit(50).to_list()
+    # 최대 30개로 줄여서 AI 처리 속도 향상
+    places = await Place.find(query_filter).limit(30).to_list()
     
     if not places:
         # 지역 필터가 너무 좁으면 전체 관광지에서 샘플링
-        places = await Place.find({"type": "관광지"}).limit(50).to_list()
+        places = await Place.find({"type": "관광지"}).limit(30).to_list()
     
     if not places:
         raise ValueError("추천할 수 있는 장소가 없습니다.")
