@@ -63,12 +63,20 @@ async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> Plac
             {"address": {"$regex": place_name, "$options": "i"}},
         ]
     
-    # 최대 30개로 줄여서 AI 처리 속도 향상
-    places = await Place.find(query_filter).limit(30).to_list()
+    # 최대 30개로 줄여서 AI 처리 속도 향상 + 주소가 있는 장소만 필터링
+    places = await Place.find(
+        query_filter,
+        Place.address != None,
+        Place.address != ""
+    ).limit(30).to_list()
     
     if not places:
-        # 지역 필터가 너무 좁으면 전체 관광지에서 샘플링
-        places = await Place.find({"type": "관광지"}).limit(30).to_list()
+        # 지역 필터가 너무 좁으면 전체 관광지에서 샘플링 (주소 있는 것만)
+        places = await Place.find(
+            {"type": "관광지"},
+            Place.address != None,
+            Place.address != ""
+        ).limit(30).to_list()
     
     if not places:
         raise ValueError("추천할 수 있는 장소가 없습니다.")
@@ -87,6 +95,17 @@ async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> Plac
     })
     
     if isinstance(result, PlaceRecommendations):
-        return result
+        recommendations = result
     else:
-        return PlaceRecommendations(**result)
+        recommendations = PlaceRecommendations(**result)
+    
+    # 6. 각 추천 장소에 위도, 경도 추가
+    places_dict = {p.name: p for p in places}
+    
+    for recommended in recommendations.places:
+        if recommended.name in places_dict:
+            place = places_dict[recommended.name]
+            recommended.latitude = place.latitude
+            recommended.longitude = place.longitude
+    
+    return recommendations
