@@ -1,21 +1,16 @@
-FROM python:3.13-slim
+FROM python:3.13
 
-WORKDIR /app
+WORKDIR /code
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY ./requirements.txt /code/requirements.txt
 
-COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+COPY .env /code/.env
 
-COPY ./src ./src
-COPY .env .
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-ENV PYTHONPATH=/app
+COPY ./src /code/src
 
-EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# If running behind a proxy like Nginx or Traefik add --proxy-headers
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers"]
