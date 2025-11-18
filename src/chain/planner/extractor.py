@@ -9,6 +9,7 @@ from src.chain.planner.data import TravelPlan
 from src.chain.planner.prompt import PLANNER_PROMPT
 from src.llm.llm_client import get_llm_for_planner
 from src.model.chat import Recent
+from src.model.planner import Planner
 
 llm = get_llm_for_planner()
 parser = PydanticOutputParser(pydantic_object=TravelPlan)
@@ -70,9 +71,9 @@ def parse_travel_days(day_str: str) -> int:
 async def create_travel_plan(
     recent_id: PydanticObjectId,
     main_place: Dict[str, Any]
-) -> TravelPlan:
+) -> Planner:
     """
-    메인 여행지를 기반으로 전체 여행 계획을 생성합니다.
+    메인 여행지를 기반으로 전체 여행 계획을 생성하고 DB에 저장합니다.
     
     Args:
         recent_id: Recent 문서 ID
@@ -84,7 +85,7 @@ async def create_travel_plan(
             - reason: 선택 이유
     
     Returns:
-        TravelPlan: 전체 여행 계획
+        Planner: 저장된 여행 계획 문서
     """
     # 1. Recent 데이터 가져오기
     recent = await Recent.get(recent_id)
@@ -147,4 +148,34 @@ async def create_travel_plan(
     else:
         travel_plan = TravelPlan(**result)
     
-    return travel_plan
+    # 4. Planner 문서 생성 및 저장
+    planner = Planner(
+        recent_id=recent_id,
+        main_destination_name=travel_plan.main_destination_name,
+        main_destination_address=travel_plan.main_destination_address,
+        main_destination_latitude=travel_plan.main_destination_latitude,
+        main_destination_longitude=travel_plan.main_destination_longitude,
+        total_days=travel_plan.total_days,
+        daily_plans=[plan.model_dump() for plan in travel_plan.daily_plans],
+        overview=travel_plan.overview,
+    )
+    
+    await planner.insert()
+    
+    return planner
+
+
+async def get_travel_plan(recent_id: PydanticObjectId) -> Planner:
+    """
+    Recent ID로 저장된 여행 계획 조회
+    
+    Args:
+        recent_id: Recent 문서 ID
+    
+    Returns:
+        Planner: 여행 계획 문서
+    """
+    planner = await Planner.find_one(Planner.recent_id == recent_id)
+    if not planner:
+        raise ValueError("해당 Recent ID에 대한 여행 계획을 찾을 수 없습니다.")
+    return planner

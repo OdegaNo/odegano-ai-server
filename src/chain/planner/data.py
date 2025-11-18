@@ -1,51 +1,39 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
-class TravelPlace(BaseModel):
-    """여행지 정보"""
-    name: str = Field(..., description="장소 이름")
+class ScheduleItem(BaseModel):
+    """일정 항목 (여행지, 식당, 숙소 통합)"""
+    type: Literal["place", "restaurant", "accommodation"] = Field(..., description="항목 타입")
+    name: str = Field(..., description="장소/식당/숙소 이름")
     address: str = Field(..., description="주소")
-    reason: str = Field(..., description="추천 이유")
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
-    visit_time: str = Field(..., description="방문 시간 (예: 09:00, 14:00)")
-
-
-class Restaurant(BaseModel):
-    """식당 정보"""
-    name: str = Field(..., description="식당 이름")
-    address: str = Field(..., description="주소")
-    cuisine_type: str = Field(..., description="음식 종류 (예: 한식, 일식)")
+    visit_time: str = Field(..., description="방문/식사/체크인 시간 (예: 09:00)")
     reason: str = Field(..., description="추천 이유")
-    latitude: Optional[float] = Field(None, description="위도")
-    longitude: Optional[float] = Field(None, description="경도")
-    meal_time: str = Field(..., description="식사 시간 (예: 점심, 저녁)")
-
-
-class Accommodation(BaseModel):
-    """숙소 정보"""
-    name: str = Field(..., description="숙소 이름")
-    address: str = Field(..., description="주소")
-    accommodation_type: str = Field(..., description="숙소 유형 (예: 호텔, 펜션, 게스트하우스)")
-    reason: str = Field(..., description="추천 이유")
-    latitude: Optional[float] = Field(None, description="위도")
-    longitude: Optional[float] = Field(None, description="경도")
+    
+    # 식당 전용 필드
+    cuisine_type: Optional[str] = Field(None, description="음식 종류 (식당인 경우)")
+    meal_time: Optional[str] = Field(None, description="식사 시간 구분 (점심, 저녁)")
+    
+    # 숙소 전용 필드
+    accommodation_type: Optional[str] = Field(None, description="숙소 유형 (숙소인 경우)")
 
 
 class DayPlan(BaseModel):
     """하루 일정"""
     day: int = Field(..., description="여행 일차 (1부터 시작)")
     date: str = Field(..., description="날짜 (예: 2024-03-15)")
-    places: List[TravelPlace] = Field(..., description="방문할 여행지 목록")
-    restaurants: List[Restaurant] = Field(..., description="식사 장소 목록")
-    accommodation: Optional[Accommodation] = Field(None, description="숙박 장소 (마지막 날 제외)")
+    schedule: List[ScheduleItem] = Field(..., description="시간순으로 정렬된 일정 목록")
     summary: str = Field(..., description="하루 일정 요약")
 
 
 class TravelPlan(BaseModel):
     """전체 여행 계획"""
-    main_destination: TravelPlace = Field(..., description="메인 여행지 정보")
+    main_destination_name: str = Field(..., description="메인 여행지 이름")
+    main_destination_address: str = Field(..., description="메인 여행지 주소")
+    main_destination_latitude: float = Field(..., description="메인 여행지 위도")
+    main_destination_longitude: float = Field(..., description="메인 여행지 경도")
     total_days: int = Field(..., description="전체 여행 일수")
     daily_plans: List[DayPlan] = Field(..., description="일별 여행 계획")
     overview: str = Field(..., description="전체 여행 개요 및 팁")

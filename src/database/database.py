@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from src.model.chat import Recent
 from src.model.place import Place
+from src.model.planner import Planner
 
 load_dotenv()
 
@@ -20,5 +21,5 @@ async def app_init():
 
     await init_beanie(
         database=db,
-        document_models=[Recent, Place]
+        document_models=[Recent, Place, Planner]
     )
