@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.chain.categories.extractor import extract_place_traits
 from src.chain.purpose.extractor import respond_to_purpose
+from src.chain.recommend.extractor import recommend_places
 from src.database.database import app_init
 from src.model.chat import Recent
 
@@ -39,6 +40,11 @@ async def traits(places: str):
 @app.post("/perpose")
 async def perpose(reason: str, id: PydanticObjectId):
     return await respond_to_purpose(id, reason)
+
+@app.post("/recommend")
+async def recommend(id: PydanticObjectId, limit: int = 10):
+    """키워드 기반 장소 추천"""
+    return await recommend_places(id, limit)
 
 @app.post("/people")
 async def people(id: PydanticObjectId, people: str):
