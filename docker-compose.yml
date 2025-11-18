@@ -9,10 +9,9 @@ services:
       - .env
     expose:
       - "80"
-    restart: unless-stopped
     networks:
       - odegano
-      
+
   nginx:
     image: nginx:stable-alpine
     depends_on:
