@@ -4,6 +4,7 @@ from beanie import Document
 
 class Recent(Document):
     categories: dict
+    main_purpose: str = ""
     people: Optional[str] = None
     day: Optional[str] = None
     options: Optional[list] = []

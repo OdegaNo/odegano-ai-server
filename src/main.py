@@ -4,8 +4,9 @@ from beanie import PydanticObjectId
 from fastapi import FastAPI
 
 from src.chain.categories.extractor import extract_place_traits
-from src.chain.perpose.extractor import respond_to_purpose
+from src.chain.purpose.extractor import respond_to_purpose
 from src.database.database import app_init
+from src.model.chat import Recent
 
 
 @asynccontextmanager
@@ -15,10 +16,6 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
 
 @app.post("/traits")
 async def traits(places: str):
@@ -34,7 +31,29 @@ async def traits(places: str):
 async def perpose(reason: str, id: PydanticObjectId):
     return (
         {
-            "message": "perpose extracted",
+            "message": "purpose extracted",
             "data": await respond_to_purpose(id, reason)
+        },
+    )
+
+@app.post("/people")
+async def people(id: PydanticObjectId, people: str):
+    recent = await Recent.get(id)
+    await recent.set({Recent.people: people})
+    return (
+        {
+            "message": "people extracted",
+            "data": recent
+        },
+    )
+
+@app.post("/day")
+async def day(id: PydanticObjectId, day: str):
+    recent = await Recent.get(id)
+    await recent.set({Recent.day: day})
+    return (
+        {
+            "message": "day extracted",
+            "data": recent
         },
     )
