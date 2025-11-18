@@ -12,13 +12,14 @@ from src.model.chat import Recent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await app_init()
-    print("database connected!")
-    yield
+    try:
+        await app_init()
+        print("Database connected!")
+    except Exception as e:
+        print("Database connection failed:", e)
+        raise
 
 app = FastAPI(lifespan=lifespan)
-
-app = FastAPI()
 
 origins = [
     "http://localhost:5173",  # 프론트엔드 개발 환경
