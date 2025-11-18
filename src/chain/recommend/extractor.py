@@ -1,0 +1,94 @@
+from beanie import PydanticObjectId
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
+
+from src.chain.recommend.data import PlaceRecommendations
+from src.chain.recommend.prompt import RECOMMEND_PROMPT
+from src.llm.llm_client import get_llm
+from src.model.chat import Recent
+from src.model.place import Place
+
+llm = get_llm()
+parser = PydanticOutputParser(pydantic_object=PlaceRecommendations)
+format_instructions = parser.get_format_instructions()
+
+prompt = PromptTemplate(
+    template=RECOMMEND_PROMPT,
+    input_variables=["place_name", "keywords", "main_purpose", "places_list"],
+    partial_variables={"format_instructions": format_instructions},
+)
+
+
+def format_places_for_prompt(places: list[Place]) -> str:
+    """장소 목록을 프롬프트용 문자열로 포맷팅"""
+    formatted = []
+    for idx, place in enumerate(places, 1):
+        formatted.append(
+            f"{idx}. {place.name}\n"
+            f"   주소: {place.address or '정보 없음'}\n"
+            f"   설명: {place.description[:100] if place.description else '설명 없음'}..."
+        )
+    return "\n\n".join(formatted)
+
+
+async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> PlaceRecommendations:
+    """
+    사용자의 여행 선호도를 기반으로 장소를 추천합니다.
+    
+    Args:
+        recent_id: Recent 문서 ID
+        limit: 추천할 최대 장소 수 (기본값: 10)
+    
+    Returns:
+        PlaceRecommendations: 추천 장소 목록
+    """
+    # 1. Recent 데이터 가져오기
+    recent = await Recent.get(recent_id)
+    if not recent:
+        raise ValueError("Recent 데이터를 찾을 수 없습니다.")
+    
+    # 2. 키워드 및 정보 추출
+    categories = recent.categories
+    place_name = categories.get("place", "")
+    keywords = ", ".join(categories.get("primary_traits", []))
+    main_purpose = recent.main_purpose or "여행 및 관광"
+    
+    # 3. MongoDB에서 관광지만 필터링 (빠른 응답을 위해 제한)
+    # 지역 키워드로 필터링 시도
+    query_filter = {"type": "관광지"}
+    
+    # 지역명이 포함되어 있으면 필터링
+    if place_name:
+        # 간단한 지역 매칭 (예: "전라남도", "서울", "제주" 등)
+        query_filter["$or"] = [
+            {"region": {"$regex": place_name, "$options": "i"}},
+            {"address": {"$regex": place_name, "$options": "i"}},
+        ]
+    
+    # 최대 50개까지만 가져와서 응답 속도 향상
+    places = await Place.find(query_filter).limit(50).to_list()
+    
+    if not places:
+        # 지역 필터가 너무 좁으면 전체 관광지에서 샘플링
+        places = await Place.find({"type": "관광지"}).limit(50).to_list()
+    
+    if not places:
+        raise ValueError("추천할 수 있는 장소가 없습니다.")
+    
+    # 4. 프롬프트용 장소 리스트 포맷팅
+    places_list = format_places_for_prompt(places)
+    
+    # 5. AI에게 추천 요청
+    chain = prompt | llm | parser
+    
+    result = chain.invoke({
+        "place_name": place_name,
+        "keywords": keywords,
+        "main_purpose": main_purpose,
+        "places_list": places_list,
+    })
+    
+    if isinstance(result, PlaceRecommendations):
+        return result
+    else:
+        return PlaceRecommendations(**result)
