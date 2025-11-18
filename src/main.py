@@ -19,56 +19,35 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "http://localhost:5173",  # 프론트엔드 개발 환경
-    "https://odegano.kro.kr",  # 배포된 프론트엔드
-    "*"  # (필요하면 허용, 보안 고려 필수)
+    "http://localhost:5173",
+    "https://odegano.kro.kr",
+    "*"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.post("/traits")
 async def traits(places: str):
-    return (
-        {
-            "message": "traits extracted",
-            "data": await extract_place_traits(places)
-        },
-        200,
-    )
+    return await extract_place_traits(places)
 
 @app.post("/perpose")
 async def perpose(reason: str, id: PydanticObjectId):
-    return (
-        {
-            "message": "purpose extracted",
-            "data": await respond_to_purpose(id, reason)
-        },
-    )
+    return await respond_to_purpose(id, reason)
 
 @app.post("/people")
 async def people(id: PydanticObjectId, people: str):
     recent = await Recent.get(id)
     await recent.set({Recent.people: people})
-    return (
-        {
-            "message": "people extracted",
-            "data": recent
-        },
-    )
+    return recent
 
 @app.post("/day")
 async def day(id: PydanticObjectId, day: str):
     recent = await Recent.get(id)
     await recent.set({Recent.day: day})
-    return (
-        {
-            "message": "day extracted",
-            "data": recent
-        },
-    )
+    return recent
