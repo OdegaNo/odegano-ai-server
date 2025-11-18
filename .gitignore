@@ -4,3 +4,5 @@
 .Ds_Store
 
 .env*
+
+certs/
