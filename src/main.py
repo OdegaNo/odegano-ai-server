@@ -57,3 +57,9 @@ async def day(id: PydanticObjectId, day: str):
     recent = await Recent.get(id)
     await recent.set({Recent.day: day})
     return recent
+
+@app.post("/options")
+async def options(id: PydanticObjectId, options: str):
+    recent = await Recent.get(id)
+    await recent.set({Recent.options: recent.options + [options]})
+    return recent
