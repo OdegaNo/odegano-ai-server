@@ -12,12 +12,9 @@ from src.model.chat import Recent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        await app_init()
-        print("Database connected!")
-    except Exception as e:
-        print("Database connection failed:", e)
-        raise
+    await app_init()
+    print("database connected!")
+    yield
 
 app = FastAPI(lifespan=lifespan)
 
