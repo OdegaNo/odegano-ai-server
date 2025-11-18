@@ -14,7 +14,7 @@ format_instructions = parser.get_format_instructions()
 
 prompt = PromptTemplate(
     template=RECOMMEND_PROMPT,
-    input_variables=["place_name", "keywords", "main_purpose", "places_list"],
+    input_variables=["place_name", "keywords", "main_purpose", "places_list", "limit"],
     partial_variables={"format_instructions": format_instructions},
 )
 
@@ -92,6 +92,7 @@ async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> Plac
         "keywords": keywords,
         "main_purpose": main_purpose,
         "places_list": places_list,
+        "limit": limit,
     })
     
     if isinstance(result, PlaceRecommendations):
@@ -107,5 +108,8 @@ async def recommend_places(recent_id: PydanticObjectId, limit: int = 10) -> Plac
             place = places_dict[recommended.name]
             recommended.latitude = place.latitude
             recommended.longitude = place.longitude
+    
+    # 7. limit 수만큼만 반환
+    recommendations.places = recommendations.places[:limit]
     
     return recommendations

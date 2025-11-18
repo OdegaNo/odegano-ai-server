@@ -13,4 +13,4 @@ class RecommendedPlace(BaseModel):
 
 class PlaceRecommendations(BaseModel):
     """장소 추천 결과"""
-    places: List[RecommendedPlace] = Field(..., description="추천 장소 목록 (최대 10개)")
+    places: List[RecommendedPlace] = Field(..., description="추천 장소 목록")
