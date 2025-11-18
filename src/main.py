@@ -1,11 +1,20 @@
+from contextlib import asynccontextmanager
+
 from beanie import PydanticObjectId
 from fastapi import FastAPI
 
 from src.chain.categories.extractor import extract_place_traits
 from src.chain.perpose.extractor import respond_to_purpose
+from src.database.database import app_init
 
-app = FastAPI()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await app_init()
+    print("database connected!")
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
@@ -16,7 +25,7 @@ async def traits(places: str):
     return (
         {
             "message": "traits extracted",
-            "data": extract_place_traits(places)
+            "data": await extract_place_traits(places)
         },
         200,
     )

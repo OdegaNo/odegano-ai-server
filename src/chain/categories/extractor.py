@@ -15,7 +15,7 @@ prompt = PromptTemplate(
     partial_variables={"format_instructions": format_instructions},
 )
 
-def extract_place_traits(place: str) -> Recent:
+async def extract_place_traits(place: str) -> Recent:
     place = place.strip()
     if not place:
         raise ValueError("place(여행지)를 빈값으로 보낼 수 없습니다.")
@@ -31,6 +31,6 @@ def extract_place_traits(place: str) -> Recent:
         categories= parsed.model_dump(),
     )
 
-    data.insert()
+    await data.insert()
 
     return data
